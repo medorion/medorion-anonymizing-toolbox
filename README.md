@@ -18,10 +18,15 @@ git clone https://github.com/medorion/medorion-anonymizing-toolbox.git
 In R
 ```r
 # Install devtools from CRAN
-install.packages("devtools")
+if(!require(devtools)){
+  
+  install.packages("devtools")
+  
+}
+
+
 
 # Or the development version from GitHub:
-# install.packages("devtools")
 devtools::install_github("r-lib/devtools")
 
 #cd to the parent_dir_of_package/MedOrionanonymizingtoolBOX
