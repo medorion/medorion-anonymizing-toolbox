@@ -3,6 +3,11 @@ library(tidyverse)
 library(magrittr)
 
 
+
+
+
+
+
 #' this function perform safe habor guidelines on the data
 #'
 #'
@@ -26,14 +31,15 @@ safe_harbor_transformation <- function(microdata,unique_identifers,dates, dob,zi
 
 
   ############handeling the zip###############
-  load('../data/population_by_zip.rda')
-  population_by_zip$zip=as.integer(population_by_zip$zip)
-  names(population_by_zip)[which(names(population_by_zip)=="zip")]=zipcode
+  #load('../../data/uszips.rda')
+  uszips=MedOrionanonymizingtoolBOX::uszips_population
+  uszips$zip=as.integer(uszips$zip)
+  names(uszips)[which(names(uszips)=="zip")]=zipcode
 
 
   #The initial three digits of a ZIP code
-  microdata$MEMBER_ZIP_CODE=as.integer(microdata$MEMBER_ZIP_CODE/100)
-  microdata%<>%dplyr::left_join(population_by_zip[,c(zipcode,"total_population")],by = zipcode)
+  microdata[[zipcode]]= sapply(X = microdata[[zipcode]],FUN = MedOrionanonymizingtoolBOX::return_3_digit)
+  microdata%<>%dplyr::left_join(uszips[,c(zipcode,"total_population")],by = zipcode)
 
   #for all such geographic units containing 20,000 or fewer people is changed to 000
   microdata$MEMBER_ZIP_CODE[microdata$total_population<20000]="000"
@@ -130,7 +136,16 @@ anonymize_dataframe <- function(sdc_data_frame ,anony_methods=c("Suppression","m
 
 
 
+#' @export
+return_3_digit=function(num){
 
+  while(num >= 1000)
+  {
+
+    num = num / 10 ;
+  }
+  return(as.integer(num))
+}
 
 
 
