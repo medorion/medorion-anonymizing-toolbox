@@ -20,40 +20,57 @@ library(magrittr)
 #'
 #' @export
 
-safe_harbor_transformation <- function(microdata,unique_identifers,dates, dob,zipcode){
+safe_harbor_transformation <- function(microdata,unique_identifers=c(),dates=c(), dob=c(),zipcode=c()){
 
-  for(pii in unique_identifers){
+  if(length(unique_identifers)!=0){
 
-    microdata[[pii]]=NULL
+    for(pii in unique_identifers){
+
+      microdata[[pii]]=NULL
+
+    }
+
+  }
+
+  if(length(zipcode)!=0){
+    ############handeling the zip###############
+    #load('../../data/uszips.rda')
+    uszips=MedOrionanonymizingtoolBOX::uszips_population
+    uszips$zip=as.integer(uszips$zip)
+    names(uszips)[which(names(uszips)=="zip")]=zipcode
+
+
+    #The initial three digits of a ZIP code
+    microdata[[zipcode]]= sapply(X = microdata[[zipcode]],FUN = MedOrionanonymizingtoolBOX::return_3_digit)
+    microdata%<>%dplyr::left_join(uszips[,c(zipcode,"total_population")],by = zipcode)
+
+    #for all such geographic units containing 20,000 or fewer people is changed to 000
+    microdata$MEMBER_ZIP_CODE[microdata$total_population<20000]="000"
+
 
   }
 
+  if(length(dob)!=0){
 
+    #####################age####
 
-  ############handeling the zip###############
-  #load('../../data/uszips.rda')
-  uszips=MedOrionanonymizingtoolBOX::uszips_population
-  uszips$zip=as.integer(uszips$zip)
-  names(uszips)[which(names(uszips)=="zip")]=zipcode
-
-
-  #The initial three digits of a ZIP code
-  microdata[[zipcode]]= sapply(X = microdata[[zipcode]],FUN = MedOrionanonymizingtoolBOX::return_3_digit)
-  microdata%<>%dplyr::left_join(uszips[,c(zipcode,"total_population")],by = zipcode)
-
-  #for all such geographic units containing 20,000 or fewer people is changed to 000
-  microdata$MEMBER_ZIP_CODE[microdata$total_population<20000]="000"
-
-  #year supression +age above 90
-  microdata[[dob]]=lubridate::year(lubridate::now())-lubridate::year(microdata[[dob]])
-  microdata[[dob]][microdata[[dob]]>90]=90
-
-
-  for(date_col in dates){
-
-    microdata[[date_col]]=lubridate::year(microdata[[date_col]])
+    #year supression +age above 90
+    microdata[[dob]]=lubridate::year(lubridate::now())-lubridate::year(microdata[[dob]])
+    microdata[[dob]][microdata[[dob]]>90]=90
 
   }
+
+  if(length(dates)!=0){
+
+    for(date_col in dates){
+
+      microdata[[date_col]]=lubridate::year(microdata[[date_col]])
+
+    }
+
+
+  }
+
 
   #deleting the population variable
   microdata$total_population=NULL
