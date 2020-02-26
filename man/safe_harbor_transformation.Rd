@@ -4,7 +4,14 @@
 \alias{safe_harbor_transformation}
 \title{this function perform safe habor guidelines on the data}
 \usage{
-safe_harbor_transformation(microdata, unique_identifers, dates, dob, zipcode)
+safe_harbor_transformation(
+  microdata,
+  unique_identifers = c(),
+  dates = c(),
+  dob = c(),
+  zipcode = c(),
+  masking = F
+)
 }
 \arguments{
 \item{microdata}{dataframe}

@@ -20,9 +20,9 @@ library(magrittr)
 #'
 #' @export
 
-safe_harbor_transformation <- function(microdata,unique_identifers=c(),dates=c(), dob=c(),zipcode=c()){
+safe_harbor_transformation <- function(microdata,unique_identifers=c(),dates=c(), dob=c(),zipcode=c(),masking = F){
 
-  if(length(unique_identifers)!=0){
+  if(length(unique_identifers)!=0&!masking){
 
     for(pii in unique_identifers){
 
@@ -30,6 +30,19 @@ safe_harbor_transformation <- function(microdata,unique_identifers=c(),dates=c()
 
     }
 
+  }else{
+    if(length(unique_identifers)!=0){
+
+      for(pii in unique_identifers){
+
+        microdata[[pii]]=microdata[[pii]][sample(x = 1:nrow(microdata),1)]
+
+    }
+
+
+
+
+    }
   }
 
   if(length(zipcode)!=0){
@@ -49,6 +62,7 @@ safe_harbor_transformation <- function(microdata,unique_identifers=c(),dates=c()
 
 
   }
+
 
   if(length(dob)!=0){
 
@@ -108,6 +122,32 @@ transform_to_sdc <- function(microdata,
 }
 
 
+#' this split a dataframe into lowrisk patients and highrisk patients
+#'
+#'
+#' @param microdata sdc_data_frame sdc object or microdata
+#' @param k_anon_number integer -  number of anonmity to decide our split at
+#' @return list - two elements: 1) low_risk_patients 2)high_risk_patients
+#'
+#' @export
+
+
+detect_low_sample_frequency <- function(sdc_data_frame,k_anon_number=2){
+
+  result=list()
+  get_frequencies=sdc_data_frame@risk$individual%>%data.frame()
+  get_frequencies=get_frequencies$fk
+  low_risk=(get_frequencies>k_anon_number)
+  low_risk_patients=sdc_data_frame@origData[low_risk,]
+  high_risk_patients=sdc_data_frame@origData[!low_risk,]
+
+  result$low_risk_patients=low_risk_patients
+  result$high_risk_patients=high_risk_patients
+  return(result)
+
+}
+
+
 #' this function transform the data to an SDCmicro object
 #'
 #'
@@ -120,22 +160,33 @@ transform_to_sdc <- function(microdata,
 #' @export
 
 
-anonymize_dataframe <- function(sdc_data_frame ,anony_methods=c("Suppression","microaggregation"),k_anon_number=2,aggregation_number=3){
+anonymize_dataframe <- function(sdc_data_frame ,anony_methods=c("divide","Suppression","microaggregation"),k_anon_number=2,aggregation_number=3){
 
 
 
-  sdc <- sdcMicro::localSuppression(sdc_data_frame, k = k_anon_number)
-  print(sdc)
-  print(sdc,"risk")
+  if("Suppression" %in% anony_methods){
+    sdc <- sdcMicro::localSuppression(sdc_data_frame, k = k_anon_number)
+    print(sdc)
+    print(sdc,"risk")
 
-  sdc <- sdcMicro::microaggregation(sdc, aggr =aggregation_number)
-  print(sdc, "numrisk")
+  }
+
+  if("microaggregation" %in% anony_methods){
+
+    ###need to fix#####
+    # sdc <- sdcMicro::globalRecode(sdc, column="birthday",
+    #                     breaks=c(64,70,75,80), labels=c(67,72,77))
+
+    sdc <- sdcMicro::microaggregation(sdc, aggr =aggregation_number)
+    print(sdc, "numrisk")
+
+    }
 
   #releasing the data
   df_disclosure =cbind(sdc@manipNumVars,sdc@manipKeyVars)
   df_disclosure =cbind(df_disclosure,sdc_data_frame@origData[,
                                                              setdiff(names(sdc_data_frame@origData),
-                                                                     names(sdc_data_frame))])
+                                                                     names(df_disclosure))])
 
   df_disclosure = df_disclosure[,names(df_safe_harbor)]
 

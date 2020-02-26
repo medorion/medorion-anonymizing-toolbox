@@ -6,7 +6,7 @@
 \usage{
 anonymize_dataframe(
   sdc_data_frame,
-  anony_methods = c("Suppression", "microaggregation"),
+  anony_methods = c("divide", "Suppression", "microaggregation"),
   k_anon_number = 2,
   aggregation_number = 3
 )
