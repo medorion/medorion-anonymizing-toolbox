@@ -216,4 +216,61 @@ return_3_digit=function(num){
 }
 
 
+#' @export
+r_id <- function(n=10){
+
+  id=paste0(sample(c(letters,0:9), size = n), collapse = "")
+  return(id)
+
+}
+
+#' @export
+r_social_addresses <- function(n,social_media="facebook") {
+  build_social_address <- function(social_media) {
+    name_length<- sample(5:10, size = 1)
+    name_part <- paste0(sample(letters, size = name_length), collapse = "")
+    #http://www.facebook.com/smgelina
+    return(paste0("http://www.",social_media, ".com/", name_part))
+  }
+  return(replicate(n, build_social_address(social_media = social_media)))
+}
+
+#' @export
+r_email_addresses <- function(n) {
+  build_email_addresses <- function() {
+    name_length<- sample(5:10, size = 1)
+    name_part <- paste0(sample(letters, size = name_length), collapse = "")
+    #http://www.facebook.com/smgelina
+    return(paste0(name_part,"@gmail.com"))
+  }
+  return(replicate(n, build_email_addresses()))
+}
+
+
+
+#' @export
+bucketing=function(df,feature,jump_size=0.3){
+  min_feat=min(df[[feature]])
+  max_feat=max(df[[feature]])
+  feat_interval=max_feat-min_feat
+
+  for(i in seq(0,0.9,jump_size)){
+
+    feat_point=min_feat+feat_interval*i
+    feat_point_forward=min_feat+feat_interval*(i+jump_size)
+    avg_feat=(feat_point+feat_point_forward)/2
+
+    df[[feature]][df[[feature]]>=feat_point&df[[feature]]<feat_point_forward]=as.integer(avg_feat)
+
+
+
+  }
+
+  return(df)
+
+
+}
+
+
+
 
